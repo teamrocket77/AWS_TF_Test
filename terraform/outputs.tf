@@ -16,3 +16,8 @@ output "PUBKEY" {
 output "uploadanewkey" {
   value = var.upload_new_key == "y" ? "yes" : "no"
 }
+
+output "key_name" {
+  description = "Passes the name of the new key up"
+  value = var.ssh_key_name
+}

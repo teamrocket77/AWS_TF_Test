@@ -1,16 +1,3 @@
-variable "my_ip" {
-  description = "Insert IP Address here"
-
-}
-
-variable "user" {
-  description = "Insert Test users name here"
-}
-
-variable "region" {
-  description = "Insert Test users name here"
-}
-
 variable "ssh_key_name" {
   description = <<-EOF
   Name of SSH key to be used. If there isn't a key name here

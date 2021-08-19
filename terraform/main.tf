@@ -28,22 +28,11 @@ data "aws_ami" "amazon_linux" {
   }
 }
 
-resource "tls_private_key" "automated" {
-  algorithm = "RSA"
-  rsa_bits  = 4096
-  count     = var.upload_new_key == "y" && length(var.ssh_pub_key) == 0 ? 1 : 0
-}
-resource "aws_key_pair" "personal_key" {
-  key_name   = var.ssh_key_name == true ? var.ssh_key_name : "gen_key_${formatdate("DD-YY", timestamp())}"
-  public_key = var.ssh_pub_key == true ? var.ssh_pub_key : tls_private_key.automated[count.index].public_key_openssh
-
-  count = var.upload_new_key == "y" ? 1 : 0
-}
-
-resource "local_file" "gen_key" {
-  content  = tls_private_key.automated[count.index].private_key_pem
-  filename = "${path.module}/priv_key.pem"
-  count    = length(tls_private_key.automated) > 0 ? 1 : 0
+module key_pair_handler {
+  source = "./modules/key_automation/"
+  ssh_key_name = var.ssh_key_name
+  ssh_pub_key = var.ssh_pub_key
+  upload_new_key = var.upload_new_key
 }
 
 module "security_group" {
@@ -62,8 +51,14 @@ module "security_group" {
 resource "aws_eip" "this" {
   vpc      = true
   instance = module.ec2-instance[count.index].id[0]
-  count = 1
+  count    = 1
 }
+
+/*resource "local_file" "gen_key" {
+  content  = module.key_pair_handler.private_key[0].private_key_pem
+  filename = "./priv_key.pem"
+  count    = length(module.key_pair_handler.private_key) > 0 ? 1 : 0
+}*/
 
 module "ec2-instance" {
   source  = "terraform-aws-modules/ec2-instance/aws"
@@ -75,11 +70,11 @@ module "ec2-instance" {
   subnet_id                   = tolist(data.aws_subnet_ids.all.ids)[0]
   vpc_security_group_ids      = [module.security_group.security_group_id]
   associate_public_ip_address = true
-  key_name                    = aws_key_pair.personal_key[count.index].id
+  key_name                    = module.key_pair_handler.key.id
 
 
   depends_on = [
-    aws_key_pair.personal_key
+    module.key_pair_handler.key
   ]
   count = 1
 }
