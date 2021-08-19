@@ -33,6 +33,8 @@ module key_pair_handler {
   ssh_key_name = var.ssh_key_name
   ssh_pub_key = var.ssh_pub_key
   upload_new_key = var.upload_new_key
+
+  count = var.upload_new_key == "y" ? 1 : 0
 }
 
 module "security_group" {
@@ -70,7 +72,7 @@ module "ec2-instance" {
   subnet_id                   = tolist(data.aws_subnet_ids.all.ids)[0]
   vpc_security_group_ids      = [module.security_group.security_group_id]
   associate_public_ip_address = true
-  key_name                    = module.key_pair_handler.key.id
+  key_name                    = var.upload_new_key == "y" ? module.key_pair_handler.key.id : var.ssh_key_name
 
 
   depends_on = [
