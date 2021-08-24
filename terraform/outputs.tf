@@ -19,5 +19,5 @@ output "uploadanewkey" {
 
 output "key_name" {
   description = "Passes the name of the new key up"
-  value = var.ssh_key_name
+  value       = var.ssh_key_name
 }
